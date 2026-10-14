@@ -8,6 +8,10 @@ This repository documents an experimental study comparing six machine learning c
 
 **Models:** Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost, and Multi-Layer Perceptron (MLP).
 
+## New research extension: MedGuard-AI
+
+**An experimental LLM + retrieval + hybrid IoMT threat-investigation framework is now implemented in a separate PRIVATE research repository.** The [public research overview](docs/MEDGUARD_AI.md) describes the three approaches, system architecture, evaluation protocol, and current validation status. No real LLM benchmark performance is claimed yet, and the private code/data are not published.
+
 ## Reported results
 
 The following values are transcribed from the original research manuscript; they have **not been independently reproduced** in this repository.
