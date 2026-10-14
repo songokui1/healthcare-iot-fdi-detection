@@ -43,10 +43,14 @@ flowchart TD
 - A hybrid gate with measurable missed-attack risk.
 - Offline synthetic smoke-testing and a consent-gated API implementation.
 - Test suite and research protocol documenting leakage, privacy and generalization limits.
+- Read-only local results dashboard that displays aggregate recall, F1, false negatives, API calls and latency without exposing row-level telemetry.
+- Optional freshly trained LightGBM reference evaluated on the same held-out events; it remains separate from historical manuscript metrics.
 
 **Source, prompts, full experimental implementation, and unpublished materials are maintained in a separate private repository.** This public page provides a research showcase, not a code distribution.
 
 ## Research integrity and next phase
+
+Private CI verified **10 unit tests, Python source compilation, and a synthetic mock smoke test**. These are engineering checks, **not research performance measurements**.
 
 No real LLM-vs-LightGBM benchmark results have been validated yet. The existing LightGBM metrics in this public repository come from an earlier manuscript and are not a paired evaluation of MedGuard-AI.
 
