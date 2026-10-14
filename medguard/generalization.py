@@ -25,6 +25,7 @@ from .experiment import scores_for
 class SplitAudit:
     split: DataSplit
     audit: dict
+    test_groups: np.ndarray | None = None
 
 
 def _class_presence(y: np.ndarray) -> bool:
@@ -106,7 +107,7 @@ def within_domain_split(
         "warning": ("Random stratification does not prevent device/session leakage"
                     if mode == "stratified"
                     else "Separation is based on supplied metadata; verify provenance"),
-    })
+    }, test_groups=dataset.groups[test] if mode == "group" else None)
 
 
 def _numeric_columns(train: pd.DataFrame) -> list[str]:
@@ -144,23 +145,44 @@ def metric_summary(y_true: np.ndarray, predicted: np.ndarray,
 
 
 def bootstrap_intervals(y_true: np.ndarray, predicted: np.ndarray,
-                        *, repetitions: int = 300, seed: int = 42) -> dict:
-    """Class-stratified percentile CI for attack recall, F1 and FP rate.
+                        *, repetitions: int = 300, seed: int = 42,
+                        groups: np.ndarray | None = None) -> dict:
+    """Percentile CIs; cluster-resampling when group metadata is available.
 
-    Assumes independent test units. For correlated flows, use group bootstrap.
+    If no groups are supplied, samples are stratified by class. That approach
+    assumes independently sampled events and can understate uncertainty.
     """
     if repetitions < 20:
         raise ValueError("repetitions must be >= 20")
     y = np.asarray(y_true, dtype=int)
     pred = np.asarray(predicted, dtype=int)
-    normal, attacks = np.flatnonzero(y == 0), np.flatnonzero(y == 1)
-    if not len(normal) or not len(attacks):
+    if not _class_presence(y):
         raise ValueError("Both classes required for bootstrap")
     rng = np.random.default_rng(seed)
+    normal, attacks = np.flatnonzero(y == 0), np.flatnonzero(y == 1)
+    by_group = None
+    if groups is not None:
+        groups = np.asarray(groups)
+        if len(groups) != len(y):
+            raise ValueError("groups must align with evaluation labels")
+        unique = np.unique(groups)
+        if len(unique) < 3:
+            raise ValueError("Cluster bootstrap requires >= 3 evaluation groups")
+        by_group = {g: np.flatnonzero(groups == g) for g in unique}
     collected = {"attack_recall": [], "attack_f1": [], "false_positive_rate": []}
     for _ in range(repetitions):
-        inds = np.r_[rng.choice(normal, len(normal), replace=True),
-                     rng.choice(attacks, len(attacks), replace=True)]
+        if by_group is None:
+            inds = np.r_[rng.choice(normal, len(normal), replace=True),
+                         rng.choice(attacks, len(attacks), replace=True)]
+        else:
+            # A group is the sampling unit, preserving within-group correlation.
+            for attempt in range(50):
+                cluster_draw = rng.choice(unique, len(unique), replace=True)
+                inds = np.concatenate([by_group[g] for g in cluster_draw])
+                if _class_presence(y[inds]):
+                    break
+            else:
+                raise ValueError("Insufficient independent class-containing groups")
         scores = scores_for(y[inds], pred[inds])
         for field in collected:
             collected[field].append(scores[field])
@@ -168,7 +190,6 @@ def bootstrap_intervals(y_true: np.ndarray, predicted: np.ndarray,
         "low_95": float(np.quantile(values, 0.025)),
         "high_95": float(np.quantile(values, 0.975)),
     } for key, values in collected.items()}
-
 
 def evaluate_within(
     dataset: SampledDataset, *, split_mode: str = "stratified",
@@ -188,7 +209,10 @@ def evaluate_within(
         "metrics": metric_summary(split.y_test, predictions, probs),
         "confidence_intervals": bootstrap_intervals(
             split.y_test, predictions, seed=seed, repetitions=repetitions,
+            groups=plan.test_groups,
         ),
+        "interval_sampling_unit": ("group" if plan.test_groups is not None
+                                   else "individual_event"),
         "limitations": [
             "Bootstrap assumes independent evaluation observations.",
             "Dataset sampling can change observed attack prevalence.",
@@ -203,6 +227,9 @@ def evaluate_transfer(source: SampledDataset, target: SampledDataset,
     """Train on source only; no target labels or statistics influence fitting."""
     if source.dataset_id == target.dataset_id:
         raise ValueError("Transfer requires distinct source and target datasets")
+    if source.audit["task"] != target.audit["task"]:
+        raise ValueError("Incompatible task definitions: cannot directly compare "
+                         "binary intrusion with an FDI-specific endpoint")
     shared = sorted(set(source.x) & set(target.x))
     incompatible = [c for c in shared if source.units[c] != target.units[c]]
     if incompatible:
