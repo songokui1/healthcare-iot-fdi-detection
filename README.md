@@ -39,6 +39,10 @@ The manuscript highlights Source Port, TCP Flag, Destination Jitter, Packet Coun
 - [LightGBM confusion matrix (CSV)](results/lightgbm_confusion_matrix.csv)
 - [Methodology and reproducibility limitations](docs/METHODOLOGY.md)
 
+## Public versus private materials
+
+This public repository is a recruiter-facing showcase of reported model performance and deployment trade-offs. The reported metrics are intentionally public; the original manuscript, experimental notebooks, and trained artifacts are not published here. A separate private repository holds a copy of the comparison tables for ongoing work.
+
 ## Reproducibility status
 
 **This is a manuscript-grounded research results archive, not yet an executable reproduction.** The original experimental notebooks, dataset copy, preprocessing configuration, train/test indices, trained models, and SHAP artifacts have not been recovered and verified for publication here. No fabricated training code or reconstructed results are presented as original.
