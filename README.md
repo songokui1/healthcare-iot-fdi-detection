@@ -43,7 +43,7 @@ flowchart TD
 | **Multi-dataset adapters** | Explicit CSV schema, attack label and physical-unit manifests; uniform bounded-memory sampling; audit counts |
 | **Leakage-conscious experiments** | Train-only imputation; stratified, device/session-disjoint or chronological splits where actual metadata supports them |
 | **Generalization** | Source-only model fitting and unseen-target evaluation on explicitly matched canonical features and units |
-| **Reliability statistics** | Confusion matrix, attack recall/precision/F1, MCC, ROC-AUC, PR-AUC, false negatives, bootstrap intervals |
+| **Reliability statistics** | Confusion matrix, attack recall/precision/F1, MCC, ROC-AUC, PR-AUC, false negatives, cluster-aware/bootstrap intervals |
 | **Large-scale engineering** | Bounded-memory CSV replay measuring events per second and batch-inference latency |
 | **Dashboard and CI** | Aggregate-only Streamlit results display, synthetic fixtures, unit tests, security tests, automated smoke runs |
 
@@ -58,7 +58,7 @@ python -m pip install -e '.[dev,baseline]'
 python -m medguard.research_cli demo --output outputs/v2-demo.json
 ~~~
 
-This generates two synthetic IoT-style datasets with differing column names, then runs an within-dataset group split, a cross-dataset transfer experiment, and 300-event local batch replay. It is an **engineering demonstration**, not real attack-detection evidence.
+This generates two synthetic IoT-style datasets with differing column names, then runs a within-dataset group split, a cross-dataset transfer experiment, and 300-event local batch replay. It is an **engineering demonstration**, not real attack-detection evidence.
 
 To visualize:
 
@@ -72,6 +72,16 @@ To run all tests:
 ~~~bash
 python -m pytest -q
 ~~~
+
+### Local large-file stress harness (synthetic only)
+
+The scale harness generates CSVs incrementally and measures bounded-memory sampling plus source-trained batch replay. These numbers are machine-specific **engineering smoke measurements**, not clinical throughput or measured LLM serving capacity.
+
+~~~bash
+python -m medguard.scale --rows 100000 --source-cap 5000 --replay-cap 25000 --output outputs/synthetic-scale.json
+~~~
+
+The dashboard can open both v2 demonstration and synthetic scale reports. Source datasets are generated in a temporary directory and automatically discarded.
 
 **Original LLM pilot interface** (synthetic, deterministic mock by default):
 
