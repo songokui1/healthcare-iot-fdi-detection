@@ -31,6 +31,20 @@ def dashboard_projection(document: dict[str, Any]) -> dict:
     if not isinstance(document, dict):
         raise ValueError("Dashboard accepts only aggregate JSON objects")
     status = document.get("status")
+    if status == "synthetic_scale_smoke_only":
+        if not isinstance(document.get("replay"), dict):
+            raise ValueError("Incomplete synthetic scale replay report")
+        replay = dashboard_projection(document["replay"])
+        if not replay["synthetic"]:
+            raise ValueError("Scale report must contain synthetic replay")
+        return {
+            "kind": "synthetic_scale", "title": "Synthetic CSV scale smoke",
+            "status": status, "synthetic": True,
+            "sections": [replay],
+            "generated_rows_per_domain": int(document.get("generated_rows_per_domain", 0)),
+            "peak_python_tracemalloc_mb": document.get("peak_python_tracemalloc_mb"),
+            "duration_seconds": document.get("total_execution_seconds_including_csv_generation"),
+        }
     if status == "synthetic_fixture_not_scientific_evidence":
         if not all(isinstance(document.get(k), dict)
                    for k in ("within", "transfer", "replay")):
