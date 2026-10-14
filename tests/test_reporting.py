@@ -56,3 +56,17 @@ def test_reproducible_scale_harness_is_synthetic_and_capped():
     assert result["replay"]["target_events_processed"] == 175
     assert result["replay"]["status"] == "synthetic_fixture"
     assert result["peak_python_tracemalloc_mb"] > 0
+
+
+def test_synthetic_scale_report_requires_synthetic_replay():
+    from medguard.scale import run_scale
+    doc = run_scale(rows=200, source_cap=50, replay_cap=70,
+                    chunk_rows=19, seed=11)
+    projection = dashboard_projection(doc)
+    assert projection["kind"] == "synthetic_scale"
+    assert projection["synthetic"] is True
+    assert projection["generated_rows_per_domain"] == 200
+    assert projection["sections"][0]["kind"] == "replay"
+    doc["replay"]["status"] = "local_replay_unreviewed"
+    with pytest.raises(ValueError, match="must contain synthetic"):
+        dashboard_projection(doc)
