@@ -111,6 +111,10 @@ python -m medguard.cli --csv data/wustl.csv --label Label \
 
 The example still uses a mock, so its LLM columns are smoke tests only. For a valid comparison, run the same option with the actual provider and explicit consent flags. Do not claim FDI-only detection unless the target labels have been validated.
 
+## Multi-dataset expansion (v2)
+
+The new [multi-dataset protocol](V2_RESEARCH_PROTOCOL.md) documents device-heldout splits, manifest-based WUSTL/CICIoMT/CICIoT ingestion, cross-dataset baseline transfer, bootstrap uncertainty, bounded-memory replay, and the local throughput fixture. These capabilities are tested on **synthetic** data but do not yet establish real-dataset performance.
+
 ## Critical scientific caveats
 
 - WUSTL-EHMS attack labels cover more than one type of attack; binary intrusion classification is **not** automatically FDI-only evaluation.
@@ -121,7 +125,7 @@ The example still uses a mock, so its LLM columns are smoke tests only. For a va
 - A fair baseline comparison requires rerunning LightGBM on the exact same split, hardware, features, and evaluation.
 - The hybrid can miss attacks at its gate; these are scored as false negatives.
 
-Read [protocol](docs/PROTOCOL.md), [safety and rights](docs/SECURITY.md), and [results ledger](docs/RESULTS_STATUS.md).
+Read [protocol](PROTOCOL.md), [safety and rights](SECURITY.md), and [results ledger](RESULTS_STATUS.md).
 
 ## Layout
 
