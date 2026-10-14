@@ -1,0 +1,7 @@
+model,accuracy_percent,precision_percent,recall_percent,f1_percent,roc_auc,mcc,training_seconds,inference_ms_per_sample
+Logistic Regression,92.22,72.21,61.49,66.87,0.8719,0.624,1.722,0.0018
+Random Forest,95.25,99.22,62.76,76.62,0.9670,0.767,2.664,0.0208
+XGBoost,96.57,97.75,74.33,84.44,0.9900,0.835,0.250,0.0024
+LightGBM,98.96,97.95,93.64,95.75,0.9984,0.952,0.429,0.0066
+CatBoost,97.82,98.84,83.60,90.61,0.9980,0.898,0.792,0.0077
+MLP,95.22,96.68,64.06,77.50,0.9550,0.765,3.877,0.0030
