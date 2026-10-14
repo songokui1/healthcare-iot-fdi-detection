@@ -1,6 +1,6 @@
-# Healthcare IoT False Data Injection Detection
+# MedGuard-AI — LLM-Powered Healthcare IoT Threat Analysis
 
-**Deployment-oriented comparison of lightweight machine learning models using WUSTL-EHMS-2020**
+**Public Python research prototype + original six-model WUSTL-EHMS-2020 evaluation**
 
 ## Overview
 
@@ -8,9 +8,27 @@ This repository documents an experimental study comparing six machine learning c
 
 **Models:** Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost, and Multi-Layer Perceptron (MLP).
 
-## New research extension: MedGuard-AI
+## MedGuard-AI research implementation
 
-**An experimental LLM + retrieval + hybrid IoMT threat-investigation framework is now implemented in a separate PRIVATE research repository.** The [public research overview](docs/MEDGUARD_AI.md) describes the three approaches, system architecture, evaluation protocol, and current validation status. No real LLM benchmark performance is claimed yet, and the private code/data are not published.
+**The complete MedGuard-AI source implementation is publicly available in this repository.** It compares three approaches to numerical IoMT telemetry: (1) LLM-only assessment, (2) retrieval-augmented LLM analysis (RAG), and (3) a hybrid anomaly gate followed by RAG/LLM investigation.
+
+- [Python modules](medguard/) — data sanitization, summarization, LLM/RAG analysis, and matched evaluation
+- [Runnable tests](tests/test_medguard.py) and [GitHub Actions](.github/workflows/test.yml)
+- [Streamlit research dashboard](dashboard.py) — aggregate results only
+- [Full implementation guide](docs/MEDGUARD_IMPLEMENTATION.md) and [architecture overview](docs/MEDGUARD_AI.md)
+- [Research protocol](docs/PROTOCOL.md), [safety boundaries](docs/SECURITY.md), [results-status ledger](docs/RESULTS_STATUS.md), and [new paper blueprint](docs/NEW_PAPER_BLUEPRINT.md)
+
+### Run the public research prototype locally
+
+```bash
+python -m pip install -e '.[dev]'
+python -m pytest -q
+python -m medguard.cli --max-test-rows 20 --output outputs/smoke.json
+```
+
+The default uses a **synthetic fixture and deterministic mock**, with no paid API calls. Its scores are **not research findings**. A real OpenAI-powered run requires an authorized local dataset, an API key, and two explicit CLI flags authorizing external telemetry transfer and API spending; see the [implementation guide](docs/MEDGUARD_IMPLEMENTATION.md).
+
+The original dataset, real credentials, and unpublished manuscripts are **not distributed**. There are **no verified real-LLM WUSTL benchmark findings** in this repository.
 
 ## Reported results
 
@@ -43,13 +61,13 @@ The manuscript highlights Source Port, TCP Flag, Destination Jitter, Packet Coun
 - [LightGBM confusion matrix (CSV)](results/lightgbm_confusion_matrix.csv)
 - [Methodology and reproducibility limitations](docs/METHODOLOGY.md)
 
-## Public versus private materials
+## Research source and distribution
 
-This public repository is a recruiter-facing showcase of reported model performance and deployment trade-offs. The reported metrics are intentionally public; the original manuscript, experimental notebooks, and trained artifacts are not published here. A separate private repository holds a copy of the comparison tables for ongoing work.
+The source code, tests, research design, dashboard, and comparison tables are publicly viewable. The authorized WUSTL dataset, API secrets, original experimental notebooks and weights, and any unpublished manuscript remain outside this repository. Those missing historical artifacts have not been recreated or represented as recovered.
 
 ## Reproducibility status
 
-**This is a manuscript-grounded research results archive, not yet an executable reproduction.** The original experimental notebooks, dataset copy, preprocessing configuration, train/test indices, trained models, and SHAP artifacts have not been recovered and verified for publication here. No fabricated training code or reconstructed results are presented as original.
+**MedGuard-AI is an executable prototype with an offline synthetic smoke test.** The historical six-model figures above come from the original manuscript, not a fresh experiment. A fair real-LLM vs. LightGBM comparison still requires authorized WUSTL data and a matched evaluation run. The original six-model notebooks, train/test indices, model weights, and SHAP artifacts have not been recovered; no reconstructed code is represented as original.
 
 ## Rights and data
 
