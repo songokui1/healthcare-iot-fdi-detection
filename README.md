@@ -1,80 +1,135 @@
-# MedGuard-AI — LLM-Powered Healthcare IoT Threat Analysis
+# MedGuard-AI
+### Multi-Dataset Healthcare IoT Threat Detection and AI-Assisted Investigation
 
-**Public Python research prototype + original six-model WUSTL-EHMS-2020 evaluation**
+[![Research CI](https://github.com/songokui1/healthcare-iot-fdi-detection/actions/workflows/test.yml/badge.svg)](https://github.com/songokui1/healthcare-iot-fdi-detection/actions/workflows/test.yml)
 
-## Overview
+**A public research software project exploring how conventional detectors, large language models, retrieval-augmented reasoning, and selective anomaly screening behave under heterogeneous IoT/IoMT traffic.**
 
-This repository documents an experimental study comparing six machine learning classifiers for binary false data injection (FDI) attack detection in healthcare IoT traffic. It emphasizes predictive performance, inference latency, training time, and SHAP-based interpretability.
+> **Research maturity:** Working engineering prototype and synthetic CI—not a validated intrusion detection product. Real cross-dataset and real-LLM benchmarks are **not yet claimed**. This repository contains neither third-party dataset copies nor private API credentials. **All rights reserved; see [LICENSE](LICENSE).**
 
-**Models:** Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost, and Multi-Layer Perceptron (MLP).
+## Research questions
 
-## MedGuard-AI research implementation
+1. **Generalization:** Do detectors trained on one device/protocol/dataset remain reliable on unseen IoT/medical IoT distributions?
+2. **AI assistance:** Can an LLM produce useful evidence-grounded investigation notes without sacrificing attack recall or hallucinating support?
+3. **Operational trade-offs:** When is a fast anomaly gate worthwhile compared with calling an LLM on every event?
+4. **Reproducibility:** Can we evaluate unseen sessions/devices and report missing attacks, feature drift, throughput, uncertainty and compute costs without leaking test labels?
 
-**The complete MedGuard-AI source implementation is publicly available in this repository.** It compares three approaches to numerical IoMT telemetry: (1) LLM-only assessment, (2) retrieval-augmented LLM analysis (RAG), and (3) a hybrid anomaly gate followed by RAG/LLM investigation.
+## System architecture
 
-- [Python modules](medguard/) — data sanitization, summarization, LLM/RAG analysis, and matched evaluation
-- [Runnable tests](tests/test_medguard.py) and [GitHub Actions](.github/workflows/test.yml)
-- [Streamlit research dashboard](dashboard.py) — aggregate results only
-- [Full implementation guide](docs/MEDGUARD_IMPLEMENTATION.md) and [architecture overview](docs/MEDGUARD_AI.md)
-- [Research protocol](docs/PROTOCOL.md), [safety boundaries](docs/SECURITY.md), [results-status ledger](docs/RESULTS_STATUS.md), and [new paper blueprint](docs/NEW_PAPER_BLUEPRINT.md)
+~~~mermaid
+flowchart TD
+    A[Locally authorized IoMT/IoT CSVs] --> B[Explicit schema and label manifests]
+    B --> C[Leakage guard + bounded-memory ingestion]
+    C --> D[Train-only preprocessing]
+    D --> E[Within-domain tests]
+    D --> F[Cross-dataset transfer]
+    D --> G[CSV replay and throughput]
+    D --> H[Anomaly gate]
+    D --> I[LLM-only / RAG + LLM]
+    H --> J[LLM investigation of flagged events]
+    E --> K[Aggregate research reports]
+    F --> K
+    G --> K
+    I --> K
+    J --> K
+    K --> L[Local Streamlit dashboard]
+~~~
 
-### Run the public research prototype locally
+## What's implemented
 
-```bash
-python -m pip install -e '.[dev]'
+| Research subsystem | Capability |
+| --- | --- |
+| **LLM / RAG / hybrid evaluation** | Structured JSON classification, bounded numeric summaries, curated local TF-IDF retrieval, evidence/citation validation, and hybrid anomaly gating |
+| **Multi-dataset adapters** | Explicit CSV schema, attack label and physical-unit manifests; uniform bounded-memory sampling; audit counts |
+| **Leakage-conscious experiments** | Train-only imputation; stratified, device/session-disjoint or chronological splits where actual metadata supports them |
+| **Generalization** | Source-only model fitting and unseen-target evaluation on explicitly matched canonical features and units |
+| **Reliability statistics** | Confusion matrix, attack recall/precision/F1, MCC, ROC-AUC, PR-AUC, false negatives, bootstrap intervals |
+| **Large-scale engineering** | Bounded-memory CSV replay measuring events per second and batch-inference latency |
+| **Dashboard and CI** | Aggregate-only Streamlit results display, synthetic fixtures, unit tests, security tests, automated smoke runs |
+
+The original LightGBM six-model comparison is preserved as **historical manuscript-reported research**, not passed off as the result of the new model pipeline.
+
+## Try it in two commands — no data download or API key
+
+Python 3.10+:
+
+~~~bash
+python -m pip install -e '.[dev,baseline]'
+python -m medguard.research_cli demo --output outputs/v2-demo.json
+~~~
+
+This generates two synthetic IoT-style datasets with differing column names, then runs an within-dataset group split, a cross-dataset transfer experiment, and 300-event local batch replay. It is an **engineering demonstration**, not real attack-detection evidence.
+
+To visualize:
+
+~~~bash
+python -m pip install -e '.[dashboard]'
+streamlit run dashboard.py
+~~~
+
+To run all tests:
+
+~~~bash
 python -m pytest -q
-python -m medguard.cli --max-test-rows 20 --output outputs/smoke.json
-```
+~~~
 
-The default uses a **synthetic fixture and deterministic mock**, with no paid API calls. Its scores are **not research findings**. A real OpenAI-powered run requires an authorized local dataset, an API key, and two explicit CLI flags authorizing external telemetry transfer and API spending; see the [implementation guide](docs/MEDGUARD_IMPLEMENTATION.md).
+**Original LLM pilot interface** (synthetic, deterministic mock by default):
 
-The original dataset, real credentials, and unpublished manuscripts are **not distributed**. There are **no verified real-LLM WUSTL benchmark findings** in this repository.
+~~~bash
+python -m medguard.cli --max-test-rows 20 --output outputs/mock-llm.json
+~~~
 
-## Reported results
+Real provider calls require an authorized dataset, locally configured API credentials, and **two explicit consent flags** authorizing numerical telemetry transfer and billable API calls. No CI workflow makes billable API calls.
 
-The following values are transcribed from the original research manuscript; they have **not been independently reproduced** in this repository.
+## Expanding beyond WUSTL
 
-| Model | Accuracy (%) | Precision (%) | Recall (%) | F1 (%) | ROC-AUC | MCC | Training (s) | Inference (ms/sample) |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Logistic Regression | 92.22 | 72.21 | 61.49 | 66.87 | 0.8719 | 0.624 | 1.722 | 0.0018 |
-| Random Forest | 95.25 | 99.22 | 62.76 | 76.62 | 0.9670 | 0.767 | 2.664 | 0.0208 |
-| XGBoost | 96.57 | 97.75 | 74.33 | 84.44 | 0.9900 | 0.835 | 0.250 | 0.0024 |
-| LightGBM | 98.96 | 97.95 | 93.64 | 95.75 | 0.9984 | 0.952 | 0.429 | 0.0066 |
-| CatBoost | 97.82 | 98.84 | 83.60 | 90.61 | 0.9980 | 0.898 | 0.792 | 0.0077 |
-| MLP | 95.22 | 96.68 | 64.06 | 77.50 | 0.9550 | 0.765 | 3.877 | 0.0030 |
+| Dataset | Intended study role | Official source |
+| --- | --- | --- |
+| **WUSTL-EHMS-2020** | Medical sensor + flow telemetry; original research foundation | [Washington University](https://www.cs.wustl.edu/~jain/ehms/index.html) |
+| **CICIoMT2024** | New medical devices, attack families, Wi-Fi/MQTT/Bluetooth contexts | [Canadian Institute for Cybersecurity](https://www.unb.ca/cic/datasets/iomt-dataset-2024.html) |
+| **CICIoT2023** | Larger heterogeneous IoT traffic and scale / cross-domain tests | [Canadian Institute for Cybersecurity](https://www.unb.ca/cic/datasets/iotdataset-2023.html) |
 
-The manuscript reports the LightGBM confusion matrix as **TN = 2,847, FP = 8, FN = 26, TP = 383** (3,264 observations). These counts are consistent with approximately 98.96% accuracy, 93.64% recall, and 97.95% precision.
+The repository includes [example manifest templates](dataset_profiles/) for these datasets. **They deliberately contain placeholder headers, labels and/or units that must be verified against the downloaded source.** Dataset schemas differ across protocols and source distributions; no guessed feature mapping or fabricated label conversion is shipped as validated.
 
-## Research workflow
+To run real research after verifying the profiles and acquiring authorized data:
 
-1. Load and preprocess WUSTL-EHMS-2020 traffic data.
-2. Train six classifiers using a shared train/test evaluation framework.
-3. Evaluate accuracy, precision, recall, F1, ROC-AUC, MCC, training time, and inference latency.
-4. Inspect LightGBM's confusion matrix and SHAP feature attributions.
-5. Compare deployment trade-offs for resource-constrained healthcare IoT systems.
+~~~bash
+python -m medguard.research_cli inspect --source dataset_profiles/wustl_ehms_2020.json --sha256
+python -m medguard.research_cli evaluate --source dataset_profiles/wustl_ehms_2020.json --split group --output outputs/wustl.json
+python -m medguard.research_cli transfer --source dataset_profiles/wustl_ehms_2020.json --target dataset_profiles/ciciomt2024_wifi_mqtt.json --output outputs/transfer.json
+python -m medguard.research_cli replay --source dataset_profiles/ciciomt2024_wifi_mqtt.json --target dataset_profiles/ciciot2023.json --max-events 100000 --output outputs/replay.json
+~~~
 
-The manuscript highlights Source Port, TCP Flag, Destination Jitter, Packet Count, Inter-Packet Time, and physiological features such as Temperature, Pulse Rate, Respiratory Rate, and ST Measurements among the influential predictors.
+These are **interface examples**, not executable commands with the unmodified \`.example.json\` templates. A group split specifically requires a real group identifier. See [v2 methodology](docs/V2_RESEARCH_PROTOCOL.md) for responsible data preparation.
 
-## Contents
+## Original research: conventional model comparison
 
-- [Reported results (CSV)](results/model_comparison.csv)
-- [LightGBM confusion matrix (CSV)](results/lightgbm_confusion_matrix.csv)
-- [Methodology and reproducibility limitations](docs/METHODOLOGY.md)
+The values below are transcribed from the earlier *Deployment-Oriented Evaluation of Lightweight Machine Learning Models for False Data Injection Detection in Healthcare IoT* manuscript. They have **not** been independently reproduced by MedGuard-AI.
 
-## Research source and distribution
+| Model | Accuracy (%) | Recall (%) | F1 (%) | ROC-AUC | Training (s) | Inference (ms/sample) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Logistic Regression | 92.22 | 61.49 | 66.87 | 0.8719 | 1.722 | 0.0018 |
+| Random Forest | 95.25 | 62.76 | 76.62 | 0.9670 | 2.664 | 0.0208 |
+| XGBoost | 96.57 | 74.33 | 84.44 | 0.9900 | 0.250 | 0.0024 |
+| **LightGBM** | **98.96** | **93.64** | **95.75** | **0.9984** | 0.429 | 0.0066 |
+| CatBoost | 97.82 | 83.60 | 90.61 | 0.9980 | 0.792 | 0.0077 |
+| MLP | 95.22 | 64.06 | 77.50 | 0.9550 | 3.877 | 0.0030 |
 
-The source code, tests, research design, dashboard, and comparison tables are publicly viewable. The authorized WUSTL dataset, API secrets, original experimental notebooks and weights, and any unpublished manuscript remain outside this repository. Those missing historical artifacts have not been recreated or represented as recovered.
+The original manuscript reports a LightGBM confusion matrix of TN 2,847, FP 8, FN 26, TP 383. **This is not a new, paired LLM-versus-LightGBM result.**
 
-## Reproducibility status
+## Project map
 
-**MedGuard-AI is an executable prototype with an offline synthetic smoke test.** The historical six-model figures above come from the original manuscript, not a fresh experiment. A fair real-LLM vs. LightGBM comparison still requires authorized WUSTL data and a matched evaluation run. The original six-model notebooks, train/test indices, model weights, and SHAP artifacts have not been recovered; no reconstructed code is represented as original.
+- [medguard/](medguard/) — LLM/RAG/hybrid analysis, dataset registry, splits, transfer, replay and reporting modules
+- [tests/](tests/) — leakage, label mapping, separation, provenance and integration tests
+- [dataset_profiles/](dataset_profiles/) — schemas that must be configured from actual downloaded datasets
+- [dashboard.py](dashboard.py) — read-only, aggregate-only Streamlit UI
+- [docs/V2_RESEARCH_PROTOCOL.md](docs/V2_RESEARCH_PROTOCOL.md) — scientifically grounded expansion protocol
+- [docs/PROTOCOL.md](docs/PROTOCOL.md) — initial LLM research design
+- [docs/RESULTS_STATUS.md](docs/RESULTS_STATUS.md) — completed vs unrun evidence ledger
+- [docs/NEW_PAPER_BLUEPRINT.md](docs/NEW_PAPER_BLUEPRINT.md) — prospective manuscript structure without invented findings
 
-## Rights and data
+## Important limitations
 
-**All rights reserved.** Public visibility is for portfolio review only; no general permission to reuse, modify, or redistribute original content is granted. See [LICENSE](LICENSE) for the current notice. Prior licensing grants, if any, may remain effective.
+A conventional model can outperform an LLM on tabular network features; the evidence must decide. WUSTL's binary attack classification is **not automatically an FDI-only endpoint**, and CICIoMT/CICIoT attack families do not share equivalent ground truths by default. Network features may encode capture/session artifacts or MAC-derived label proxies. Real results need dataset-specific label audits, capture/device isolation, external validation and expert checks of LLM explanations. Synthetic scores, bootstrap intervals over correlated flows, and local batch replay cannot establish hospital deployment readiness.
 
-Third-party datasets, publications, and jointly authored material remain subject to their own rights and permissions.
-
-## Research context
-
-Original work titled *Deployment-Oriented Evaluation of Lightweight Machine Learning Models for False Data Injection Detection in Healthcare IoT*. This repository is a technical project summary and does not claim peer-reviewed acceptance.
+**Rights:** Public visibility permits portfolio inspection, not unrestricted reuse. See [LICENSE](LICENSE). Previously granted rights, if any, may remain effective, and third-party datasets retain their own licenses and citation requirements.
