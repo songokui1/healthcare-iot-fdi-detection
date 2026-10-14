@@ -1,0 +1,26 @@
+{
+  "dataset_id": "ciciot2023",
+  "files": [
+    "../data/ciciot2023.csv"
+  ],
+  "label_column": "VERIFY_EXACT_LABEL_COLUMN",
+  "benign_values": [
+    "VERIFY_EXACT_BENIGN_LABEL"
+  ],
+  "attack_values": [
+    "VERIFY_ATTACK_LABEL_1",
+    "VERIFY_ATTACK_LABEL_2"
+  ],
+  "features": {
+    "total_packets": "VERIFY_EXACT_PACKET_COUNT_COLUMN",
+    "duration": "VERIFY_EXACT_DURATION_COLUMN"
+  },
+  "units": {
+    "total_packets": "count",
+    "duration": "VERIFY_ORIGINAL_UNIT"
+  },
+  "task": "binary_intrusion",
+  "source_url": "https://www.unb.ca/cic/datasets/iotdataset-2023.html",
+  "group_column": null,
+  "time_column": null
+}
