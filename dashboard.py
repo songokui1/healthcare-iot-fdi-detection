@@ -23,7 +23,7 @@ entry = st.sidebar.text_input(
 )
 st.sidebar.caption(
     "Supported: v1 LLM comparisons, v2 within-domain, transfer, replay, "
-    "and the fully synthetic demonstration. No individual events are loaded."
+    "the fully synthetic demonstration, and synthetic scale tests. No individual events are loaded."
 )
 st.sidebar.markdown("**Rights:** All rights reserved. Research demonstration only.")
 
@@ -130,6 +130,13 @@ if report["kind"] == "synthetic_demo":
     for tab, section in zip(tabs, report["sections"]):
         with tab:
             _render(section)
+elif report["kind"] == "synthetic_scale":
+    st.metric("Synthetic rows generated per domain",
+              report["generated_rows_per_domain"])
+    st.metric("Python traced peak allocations (MB)",
+              report["peak_python_tracemalloc_mb"])
+    st.caption("This is not process RSS; native array allocations are excluded.")
+    _render(report["sections"][0])
 else:
     _render(report)
 
