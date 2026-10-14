@@ -1,6 +1,6 @@
 # MedGuard-AI: LLM-Powered Healthcare IoT Threat Investigation
 
-**Experimental research extension — implemented privately; real-model results pending**
+**Public experimental research prototype — real-model results pending**
 
 ## Research direction
 
@@ -35,7 +35,7 @@ flowchart TD
  J --> K[Attack recall, F1, false negatives, latency, calls, tokens]
 ~~~
 
-## Engineering completed (private)
+## Engineering completed (public implementation)
 
 - Modular Python prototype for event preparation and bounded prompt generation.
 - Curated local knowledge retrieval and machine-readable LLM response validation.
@@ -46,11 +46,11 @@ flowchart TD
 - Read-only local results dashboard that displays aggregate recall, F1, false negatives, API calls and latency without exposing row-level telemetry.
 - Optional freshly trained LightGBM reference evaluated on the same held-out events; it remains separate from historical manuscript metrics.
 
-**Source, prompts, full experimental implementation, and unpublished materials are maintained in a separate private repository.** This public page provides a research showcase, not a code distribution.
+**All current MedGuard-AI source modules, automated tests, the optional conventional baseline, the synthetic smoke test, and the dashboard are available publicly.** See [the implementation guide](MEDGUARD_IMPLEMENTATION.md), [Python package](../medguard/), and [dashboard](../dashboard.py). Original WUSTL data, API secrets, model assets, and unpublished manuscripts are not provided.
 
 ## Research integrity and next phase
 
-Private CI verified **10 unit tests, Python source compilation, and a synthetic mock smoke test**. These are engineering checks, **not research performance measurements**.
+Prior private CI verified **10 unit tests, Python source compilation, and a synthetic mock smoke test**. These are engineering checks, **not research performance measurements**.
 
 No real LLM-vs-LightGBM benchmark results have been validated yet. The existing LightGBM metrics in this public repository come from an earlier manuscript and are not a paired evaluation of MedGuard-AI.
 
@@ -58,7 +58,7 @@ Before performance claims, the researchers must complete authorized dataset acqu
 
 The source dataset includes more than one attack context, so broad binary intrusion-detection results must not be mislabeled as exclusively false-data-injection detection. In addition, the original dataset labels are associated with attacker MAC addresses; identifier and proxy leakage require special care.
 
-**No API keys, raw telemetry, original research implementation, or unpublished manuscript are published here.**
+**No API keys, raw telemetry, or unpublished manuscripts are published here. The research implementation is now public.**
 
 Research source: https://www.cs.wustl.edu/~jain/ehms/index.html
 
