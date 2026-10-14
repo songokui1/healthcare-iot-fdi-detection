@@ -1,4 +1,4 @@
-"""Aggregate-only Streamlit research dashboard; no individual telemetry."""
+"""Streamlit dashboard for aggregate research outputs. No raw telemetry loaded."""
 from __future__ import annotations
 
 import json
@@ -7,84 +7,132 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="MedGuard-AI Lab", page_icon="🛡️", layout="wide")
-st.title("MedGuard-AI | Healthcare IoT Security Research")
-st.caption("Experimental comparison of LLM-only, RAG+LLM, and anomaly-gated RAG+LLM")
+from medguard.reporting import dashboard_projection
 
-path = st.sidebar.text_input("Local aggregate results JSON",
-                             value="outputs/aggregate.json")
-st.sidebar.caption("Only read aggregate experiment summaries; never select raw datasets.")
-st.sidebar.markdown("**Privacy:** Full source and original research remain private.")
+st.set_page_config(page_title="MedGuard-AI Research Lab", page_icon="🛡️",
+                   layout="wide")
+
+ROOT = Path(__file__).resolve().parent
+OUTPUTS = (ROOT / "outputs").resolve()
+st.title("MedGuard-AI")
+st.caption("Cross-dataset IoMT research • LLM/RAG/hybrid investigation • local replay")
+st.sidebar.header("Read a saved aggregate report")
+entry = st.sidebar.text_input(
+    "JSON file under outputs/",
+    value="outputs/v2-demo.json",
+)
+st.sidebar.caption(
+    "Supported: v1 LLM comparisons, v2 within-domain, transfer, replay, "
+    "and the fully synthetic demonstration. No individual events are loaded."
+)
+st.sidebar.markdown("**Rights:** All rights reserved. Research demonstration only.")
+
+
+def _render(data: dict) -> None:
+    kind = data["kind"]
+    st.subheader(data["title"])
+    if kind == "llm":
+        rows = data["rows"]
+        display = pd.DataFrame(rows).set_index("approach")
+        n = data.get("sample_size")
+        if n is not None:
+            st.metric("Test events", n)
+        cols = [c for c in ("attack_recall", "attack_f1") if c in display]
+        if cols:
+            st.bar_chart(display[cols])
+        st.dataframe(display, use_container_width=True)
+        if data.get("baseline"):
+            st.write("Fresh same-split LightGBM reference",
+                     pd.DataFrame([data["baseline"]]))
+        st.caption("LLM self-reported confidence is not calibrated.")
+        return
+    if kind == "detection":
+        m = data["metrics"]
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Examples", m.get("n", "?"))
+        c2.metric("Attack recall", _pct(m.get("attack_recall")))
+        c3.metric("Attack F1", _pct(m.get("attack_f1")))
+        c4.metric("False negative rate", _pct(m.get("false_negative_rate")))
+        st.dataframe(pd.DataFrame([m]), hide_index=True,
+                     use_container_width=True)
+        if data.get("source") or data.get("target"):
+            st.caption(
+                "Transfer source: " + str(data.get("source")) +
+                " · Target: " + str(data.get("target")) +
+                " · Task compatibility: " + str(data.get("task_compatibility"))
+            )
+        else:
+            st.caption("Dataset: " + str(data.get("dataset")))
+        st.caption("Canonical features: " + ", ".join(data.get("features", [])))
+        cis = data.get("confidence_intervals", {})
+        if cis:
+            st.markdown("**Class-stratified bootstrap intervals (pilot only)**")
+            st.dataframe(pd.DataFrame(cis).T, use_container_width=True)
+        return
+    if kind == "replay":
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Events replayed", data.get("events", 0))
+        c2.metric("Events/s incl. CSV", data.get("throughput_eps"))
+        c3.metric("Median batch infer. ms", data.get("median_batch_ms"))
+        c4.metric("p95 batch infer. ms", data.get("p95_batch_ms"))
+        st.caption("Source: " + str(data.get("source")) +
+                   " · Destination: " + str(data.get("target")))
+        st.dataframe(pd.DataFrame([data.get("confusion", {})]),
+                     hide_index=True, use_container_width=True)
+        st.warning("Batch latency is not per-event p95. These are local "
+                   "CPU and CSV figures, not live IoMT or LLM throughput.")
+
+
+def _pct(value) -> str:
+    if value is None:
+        return "n/a"
+    return f"{100 * value:.1f}%"
+
 
 try:
-    location = Path(path).expanduser()
-    if not location.is_file():
-        st.info("Run the private pipeline first: python -m medguard.cli "
-                "--output outputs/aggregate.json")
+    selected = Path(entry).expanduser()
+    selected = (ROOT / selected).resolve() if not selected.is_absolute() \
+        else selected.resolve()
+    # A local analyst cannot accidentally display a private file outside
+    # the project's predesignated generated-output directory.
+    if not selected.is_relative_to(OUTPUTS):
+        raise ValueError("Select an aggregate JSON report within outputs/")
+    if not selected.is_file():
+        st.info(
+            "No aggregate report at that location. Start with:\n\n"
+            "    python -m medguard.research_cli demo "
+            "--output outputs/v2-demo.json"
+        )
         st.stop()
-    payload = json.loads(location.read_text(encoding="utf-8"))
-    if payload.get("schema_version") != "1.0" or not isinstance(
-        payload.get("approaches"), dict
-    ):
-        raise ValueError("Not a MedGuard-AI aggregate report")
-except (OSError, ValueError, json.JSONDecodeError) as exc:
-    st.error(f"Cannot load aggregate report: {exc}")
+    if selected.stat().st_size > 2_000_000:
+        raise ValueError("Aggregate report exceeds 2 MB; no raw event logs allowed")
+    report = dashboard_projection(
+        json.loads(selected.read_text(encoding="utf-8"))
+    )
+except (OSError, ValueError, json.JSONDecodeError, TypeError) as exc:
+    st.error(f"Cannot display aggregate report: {exc}")
     st.stop()
 
-status = payload.get("status")
-if status == "synthetic_mock_smoke_test":
-    st.error("SYNTHETIC MOCK TEST — NOT ACTUAL LLM PERFORMANCE, "
-             "NOT CLINICAL EVIDENCE, NOT A PUBLICATION RESULT.")
-elif status == "experimental_llm_evaluation":
-    st.warning("EXPLORATORY LLM RESULTS — require independent validation, "
-               "dataset/proxy audit, larger samples, and expert review.")
+if report["synthetic"]:
+    st.error(
+        "SYNTHETIC OR MOCK RESULTS — engineering smoke tests only. "
+        "These are not WUSTL/CIC accuracy results or clinical evidence."
+    )
 else:
-    st.error("Unknown report provenance. Do not interpret these metrics.")
-    st.stop()
+    st.warning(
+        "LOCAL EXPERIMENTAL OUTPUT — dataset provenance, label mapping, "
+        "feature leakage, and statistical validity require independent review."
+    )
 
-approaches = payload["approaches"]
-if not approaches:
-    st.error("No approach-level results in this report.")
-    st.stop()
+if report["kind"] == "synthetic_demo":
+    labels = ["Within-domain", "Cross-domain", "Replay"]
+    tabs = st.tabs(labels)
+    for tab, section in zip(tabs, report["sections"]):
+        with tab:
+            _render(section)
+else:
+    _render(report)
 
-names = {
-    "llm_direct": "LLM only",
-    "llm_rag": "RAG + LLM",
-    "hybrid_gate_rag": "Hybrid gate + RAG/LLM",
-}
-data = []
-for key, metrics in approaches.items():
-    data.append({
-        "Approach": names.get(key, key),
-        "Attack recall": metrics.get("attack_recall"),
-        "Attack F1": metrics.get("attack_f1"),
-        "False positive rate": metrics.get("false_positive_rate"),
-        "False negative rate": metrics.get("false_negative_rate"),
-        "LLM calls": metrics.get("llm_calls"),
-        "Total wall seconds": metrics.get("wall_seconds_total"),
-        "ms / event (end to end)": metrics.get("wall_ms_per_evaluated_event"),
-        "TN": metrics.get("tn"), "FP": metrics.get("fp"),
-        "FN": metrics.get("fn"), "TP": metrics.get("tp"),
-    })
-frame = pd.DataFrame(data).set_index("Approach")
-c1, c2, c3 = st.columns(3)
-c1.metric("Held-out events", payload["data"]["test_examples_evaluated"])
-c2.metric("Provider", payload.get("provider", "unknown"))
-c3.metric("Total LLM calls", int(frame["LLM calls"].sum()))
-st.subheader("Predictive performance")
-st.bar_chart(frame[["Attack recall", "Attack F1"]], y_label="0–1 score")
-st.subheader("Operational costs and false negatives")
-st.dataframe(frame, use_container_width=True)
-st.markdown("**Gate screening:** " +
-            str(payload.get("gate", {}).get("flagged_events", "?")) +
-            " selected events for the hybrid LLM.")
-baseline = payload.get("conventional_baseline")
-if baseline:
-    st.subheader("Fresh, same-split LightGBM comparison")
-    st.write({k: baseline.get(k) for k in (
-        "attack_recall", "attack_f1", "accuracy", "training_seconds",
-        "wall_ms_per_evaluated_event")})
-st.subheader("Limitations")
-for item in payload.get("limitations", []):
-    st.markdown("- " + str(item))
-st.caption("Read-only dashboard. It does not make medical or security enforcement decisions.")
+st.divider()
+st.caption("No remote calls. No clinical diagnoses or autonomous interventions. "
+           "Source code is public; raw datasets, keys and event-level records remain local.")
