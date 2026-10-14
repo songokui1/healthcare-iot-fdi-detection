@@ -45,3 +45,14 @@ def test_invalid_or_forged_report_is_rejected():
             "status": "local_dataset_experiment_unreviewed",
             "method": "within_dataset_random_forest",
         })
+
+
+def test_reproducible_scale_harness_is_synthetic_and_capped():
+    from medguard.scale import run_scale
+    result = run_scale(rows=450, source_cap=120, replay_cap=175,
+                       chunk_rows=37, seed=8)
+    assert result["status"] == "synthetic_scale_smoke_only"
+    assert result["generated_rows_per_domain"] == 450
+    assert result["replay"]["target_events_processed"] == 175
+    assert result["replay"]["status"] == "synthetic_fixture"
+    assert result["peak_python_tracemalloc_mb"] > 0
