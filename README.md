@@ -43,9 +43,11 @@ The manuscript highlights Source Port, TCP Flag, Destination Jitter, Packet Coun
 
 **This is a manuscript-grounded research results archive, not yet an executable reproduction.** The original experimental notebooks, dataset copy, preprocessing configuration, train/test indices, trained models, and SHAP artifacts have not been recovered and verified for publication here. No fabricated training code or reconstructed results are presented as original.
 
-## Licensing and data
+## Rights and data
 
-Source code added to this repository may be distributed under the MIT License where the contributor has authority to license it. **The paper, figures, original dataset, and third-party materials are not covered by that software license.** Do not redistribute WUSTL-EHMS-2020 files without checking their original license and attribution requirements. Manuscript publication or licensing should be cleared with all relevant authors and rights holders.
+**All rights reserved.** Public visibility is for portfolio review only; no general permission to reuse, modify, or redistribute original content is granted. See [LICENSE](LICENSE) for the current notice. Prior licensing grants, if any, may remain effective.
+
+Third-party datasets, publications, and jointly authored material remain subject to their own rights and permissions.
 
 ## Research context
 
