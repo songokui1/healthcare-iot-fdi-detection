@@ -54,7 +54,7 @@ python -m medguard.research_cli replay --source dataset_profiles/ciciomt2024_wif
 
 - **Never compare historical 98.96% LightGBM accuracy from the old manuscript against a new model's unpaired split.** Re-run the baseline with equal task, examples, feature space, and split.
 - Cross-dataset comparison of **binary intrusion** across different attack types answers a domain-transfer question. It does not establish FDI-specific sensitivity unless equivalent attack definitions are verified.
-- Bootstrap intervals assume independent examples. Repeated flows from one device or capture violate this; use capture-/device-level bootstrap for publication.
+- The implementation uses a **group/cluster bootstrap** when evaluation group metadata has at least three groups; otherwise it uses per-event stratified resampling and reports the sampling unit. Neither approach corrects unrecorded capture dependencies or guarantees publication-grade uncertainty.
 - The reservoir sample is uniform, but finite samples might miss rare attack variants. The full scanned class proportions are recorded; do not claim sampled prevalence is deployed prevalence.
 - A fixed group-heldout test from one dataset does not prove generalization to entirely new hospitals or devices. External prospective data and reviews are needed.
 - Throughput is **local CSV ingestion + batched classical ML inference**, not live network packet ingestion or remote LLM serving performance. Do not call it production-ready.
@@ -65,3 +65,11 @@ python -m medguard.research_cli replay --source dataset_profiles/ciciomt2024_wif
 The v1 LLM, RAG and gated-hybrid modules remain available, with opt-in remote calls and synthetic smoke coverage. v2 focuses first on **defensible dataset generalization**. The next empirical phase should run actual LLM evaluations on the same heldout examples with per-sample cost and human citation audits, not call an LLM on millions of rows.
 
 A publication-worthy research contribution requires results on authorized datasets, preregistered evaluation questions, appropriate group/time separation, external shift analyses, failure audits, and reproducible model/environment specifications.
+
+## Synthetic scale stress command
+
+~~~bash
+python -m medguard.scale --rows 1000000 --source-cap 10000 --replay-cap 100000 --chunk-rows 20000 --output outputs/scale.json
+~~~
+
+This exercises CSV generation, bounded-memory source sampling and local CPU batch replay. It creates synthetic data temporarily, makes no LLM calls, and never claims real dataset quality. Its `tracemalloc` measurement omits native NumPy/pandas allocations and must not be represented as total process memory.
