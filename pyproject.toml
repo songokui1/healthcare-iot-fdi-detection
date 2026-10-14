@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "medguard-ai-research"
-version = "0.1.0"
-description = "Private experimental LLM/RAG/hybrid healthcare IoT intrusion analysis"
+version = "0.2.0"
+description = "Public multi-dataset IoMT research: LLM, RAG, hybrid and cross-domain validation"
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=1.24,<3",
@@ -21,6 +21,7 @@ dashboard = ["streamlit>=1.35,<2"]
 
 [project.scripts]
 medguard = "medguard.cli:main"
+medguard-research = "medguard.research_cli:main"
 
 [tool.setuptools.packages.find]
 include = ["medguard*"]
