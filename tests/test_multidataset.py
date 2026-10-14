@@ -168,3 +168,26 @@ def test_cli_inspect_only_outputs_aggregate(tmp_path, capsys):
     assert audit["sample"]["rows_seen"] == 160
     assert audit["sample"]["rows_retained"] == 90
     assert "aa:bb:cc:dd" not in stdout
+
+
+def test_group_bootstrap_resamples_clusters_not_only_rows():
+    actual = np.array([0, 1, 0, 1, 0, 1, 0, 1])
+    predicted = np.array([0, 1, 1, 1, 0, 0, 0, 1])
+    groups = np.array(["A", "A", "B", "B", "C", "C", "D", "D"])
+    interval = bootstrap_intervals(actual, predicted, groups=groups,
+                                   repetitions=40, seed=8)
+    assert interval["attack_recall"]["low_95"] <= interval[
+        "attack_recall"]["high_95"]
+    with pytest.raises(ValueError, match="groups must align"):
+        bootstrap_intervals(actual, predicted, groups=groups[:4],
+                            repetitions=20)
+
+
+def test_cross_dataset_rejects_different_task_definitions(tmp_path):
+    source = uniform_reservoir(DatasetSpec.load(
+        _fixture(tmp_path, name="synthetic_source_task")))
+    target = uniform_reservoir(DatasetSpec.load(
+        _fixture(tmp_path, name="synthetic_target_task")))
+    target.audit["task"] = "fdi_specific"
+    with pytest.raises(ValueError, match="Incompatible task definitions"):
+        evaluate_transfer(source, target, repetitions=20)
