@@ -1,10 +1,30 @@
+# Python packaging and local caches
 __pycache__/
 *.py[cod]
-.venv/
-.env
+.pytest_cache/
+.coverage
 .ipynb_checkpoints/
+*.egg-info/
+.venv/
+build/
+dist/
+
+# API credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Never publish dataset copies, individual medical/network events, logs, or weights
 data/
-models/
+datasets/
 outputs/
+models/
+artifacts/
 *.joblib
 *.pkl
+*.parquet
+*.feather
+*.xlsx
+*.csv
+!results/model_comparison.csv
+!results/lightgbm_confusion_matrix.csv
