@@ -1,0 +1,27 @@
+{
+  "dataset_id": "wustl_ehms_2020",
+  "files": [
+    "../data/wustl_ehms_2020.csv"
+  ],
+  "label_column": "Label",
+  "benign_values": [
+    "0"
+  ],
+  "attack_values": [
+    "1"
+  ],
+  "features": {
+    "total_packets": "VERIFY_EXACT_PACKET_COUNT_COLUMN",
+    "jitter": "VERIFY_EXACT_JITTER_COLUMN",
+    "duration": "VERIFY_EXACT_DURATION_COLUMN"
+  },
+  "units": {
+    "total_packets": "count",
+    "jitter": "VERIFY_ORIGINAL_UNIT",
+    "duration": "VERIFY_ORIGINAL_UNIT"
+  },
+  "task": "binary_intrusion",
+  "source_url": "https://www.cs.wustl.edu/~jain/ehms/index.html",
+  "group_column": null,
+  "time_column": null
+}
