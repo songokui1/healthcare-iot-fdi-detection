@@ -1,4 +1,4 @@
-name: Private research CI
+name: MedGuard-AI Research CI
 on:
   push:
     branches: [main]
@@ -23,3 +23,16 @@ jobs:
         run: python -m pytest -q
       - name: Synthetic smoke test (no real LLM or dataset)
         run: python -m medguard.cli --max-test-rows 12 --output outputs/ci-smoke.json
+      - name: Multi-dataset synthetic integration (no data download or LLM calls)
+        run: python -m medguard.research_cli demo --seed 42 --output outputs/v2-ci.json
+      - name: Validate data-provenance status
+        run: |
+          python - <<'PY'
+          import json
+          p = json.load(open("outputs/v2-ci.json", encoding="utf-8"))
+          assert p["status"] == "synthetic_fixture_not_scientific_evidence"
+          assert p["within"]["status"] == "synthetic_fixture"
+          assert p["transfer"]["status"] == "synthetic_fixture"
+          assert p["replay"]["status"] == "synthetic_fixture"
+          print("Verified: CI generates synthetic data only; no research performance claims.")
+          PY
