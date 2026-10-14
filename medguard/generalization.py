@@ -266,12 +266,19 @@ def evaluate_transfer(source: SampledDataset, target: SampledDataset,
         "metrics": metric_summary(target.y, pred, prob),
         "confidence_intervals": bootstrap_intervals(
             target.y, pred, seed=seed, repetitions=repetitions,
+            groups=(target.groups if target.groups is not None
+                    and len(np.unique(target.groups)) >= 3 else None),
+        ),
+        "interval_sampling_unit": (
+            "target_group" if target.groups is not None
+            and len(np.unique(target.groups)) >= 3 else "individual_event"
         ),
         "limitations": [
             "Different attack families may define different targets.",
             "Raw feature units can match while collection semantics differ.",
             "No target observations or labels were used in model fitting.",
-            "Bootstrap assumes independent target observations.",
+            "Intervals use a target group bootstrap when three or more groups exist; "
+            "otherwise they assume independent observations.",
             "Source/target data provenance, splits and leakage require review.",
         ],
     }
